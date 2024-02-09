@@ -777,6 +777,9 @@ HRESULT CD3D11VP::SetRTXVideoHDR(bool enable)
 	if (!m_pVideoContext) {
 		return E_ABORT;
 	}
+	
+	if (!GpuDriverSupportsVpAutoHDR())
+		return E_NOTIMPL;
 
 	if (m_VendorId == PCIV_NVIDIA) {
 		return ToggleNvidiaVpTrueHDR(enable);

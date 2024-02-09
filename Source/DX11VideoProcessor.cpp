@@ -1001,7 +1001,8 @@ bool CDX11VideoProcessor::RTXVideoHDRValid()
 	if (!m_bRTXVideoHDR_supported)
 		return false;
 
-	bool DriverSupport = m_D3D11VP.GpuDriverSupportsVpAutoHDR();
+	//RTX Video HDR requires 10bit, and we can't have that if the user forces to use 8bit
+	bool Forced8bit = m_iTexFormat == TEXFMT_8INT;
 	if (m_VendorId == PCIV_NVIDIA) {
 		//hacky fix for checking if video is HDR before all the video data is loaded/processed on first launch
 		//RTX Video HDR does not work for HDR videos, nor HDR-to-SDR videos, but does work for 10bit SDR videos.
@@ -1011,7 +1012,7 @@ bool CDX11VideoProcessor::RTXVideoHDRValid()
 		bool ValidSettings = m_bHdrPassthroughSupport && m_bVPRTXVideoHDR;
 		//does not work if another video is already using this feature,
 		//	but there is no good way to test for this.
-		return DriverSupport && ValidFormat && ValidSettings && !SourceIsHDR();
+		return !Forced8bit && ValidFormat && ValidSettings && !SourceIsHDR();
 	}
 	return false;
 }
@@ -1078,6 +1079,9 @@ bool CDX11VideoProcessor::SuperResValid()
 		//aka no downscaling support, but still works if window is the same size as the input video
 		bool OutputEqualToOrLargerThanInput = (m_srcRectWidth == dstW && m_srcRectHeight == dstH) || m_srcRectWidth < (UINT)dstW || m_srcRectHeight < (UINT)dstH;
 
+		//Super Resolution requires 10bit for 10bit videos, and we can't have that if the user forces to use 8bit
+		bool Forced8bit = m_iTexFormat == TEXFMT_8INT && (m_D3D11OutputFmt == DXGI_FORMAT_R10G10B10A2_UNORM || m_srcParams.CDepth > 8 || m_srcParams.cformat == CF_P010);
+
 		//Nvidia can only upscale the video if:
 		//	video is not too small,
 		//	video is not too large,
@@ -1085,7 +1089,7 @@ bool CDX11VideoProcessor::SuperResValid()
 		//	video is not being output in HDR (HDR-to-SDR conversion works).
 		//does not work if another video is already using this feature,
 		//	but there is no good way to test for this.
-		bool superres_valid = ValidSettings && InputLargerThanMinSize && InputSmallerThanMaxSize &&
+		bool superres_valid = !Forced8bit && ValidSettings && InputLargerThanMinSize && InputSmallerThanMaxSize &&
 			OutputEqualToOrLargerThanInput && (!SourceIsHDR() || (!m_bHdrPassthroughSupport || !m_bHdrPassthrough));
 		return superres_valid;
 	}
@@ -1901,12 +1905,29 @@ HRESULT CDX11VideoProcessor::InitializeD3D11VP(const FmtConvParams_t& params, co
 	if (!std::exchange(m_bGPUEnhancementsChecked, true)) {
 		m_bSuperRes_supported = (m_D3D11VP.SetSuperRes(true) == S_OK);
 		m_bRTXVideoHDR_supported = (m_D3D11VP.SetRTXVideoHDR(true) == S_OK);
+		//need to reload for the above information to update
+		Reset();
 	}
 
 	//Now we control when SuperRes turns on more thoroughly
 	//There should be less instances where this setting is on, but SuperRes itself is off
-	m_bVPUseSuperRes = (m_D3D11VP.SetSuperRes(SuperResValid()) == S_OK);
-	m_bVPUseRTXVideoHDR = (m_D3D11VP.SetRTXVideoHDR(RTXVideoHDRValid()) == S_OK);
+	bool superres_valid = SuperResValid();
+	m_bVPUseSuperRes = (m_D3D11VP.SetSuperRes(superres_valid) == S_OK);
+	if (superres_valid && !m_bVPUseSuperRes)
+	{
+		m_bSuperRes_supported = false;
+		Reset();
+	}
+
+	//if the function fails for whatever reason when it shouldn't,
+	//	force disable it until relaunch/new video load.
+	bool rtxvideohdr_valid = RTXVideoHDRValid();
+	m_bVPUseRTXVideoHDR = (m_D3D11VP.SetRTXVideoHDR(rtxvideohdr_valid) == S_OK);
+	if (rtxvideohdr_valid && !m_bVPUseRTXVideoHDR)
+	{
+		m_bRTXVideoHDR_supported = false;
+		Reset();
+	}
 
 	hr = m_TexSrcVideo.Create(m_pDevice, dxgiFormat, width, height, Tex2D_DynamicShaderWriteNoSRV);
 	if (FAILED(hr)) {
