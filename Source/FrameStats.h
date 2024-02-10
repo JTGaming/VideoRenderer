@@ -22,7 +22,7 @@
 
 #include "Times.h"
 
-#define SYNC_OFFSET_EX 0
+#define SYNC_OFFSET_EX 1
 #define TEST_TICKS 0
 
 template<typename T, unsigned count> class CFrameTimestamps {
@@ -201,7 +201,11 @@ public:
 	}
 
 	T Average() {
-		return sum / fifo.size();
+		//for some reason the old method was returning garbage output
+		T sum1 = sum;
+		T size1 = (T)fifo.size();
+		T out1 = sum1 / size1;
+		return out1;
 	}
 
 	std::pair<T, T> MinMax() {

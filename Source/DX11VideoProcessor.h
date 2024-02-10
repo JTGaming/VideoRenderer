@@ -157,6 +157,7 @@ private:
 	bool m_bSuperRes_supported = false;
 	bool m_bRTXVideoHDR_supported = false;
 	bool m_bGPUEnhancementsChecked = false;
+	bool m_bVPFrameSyncing = false;
 
 	bool m_bHdrPassthroughSupport = false;
 	bool m_bHdrDisplaySwitching   = false; // switching HDR display in progress
@@ -221,6 +222,7 @@ private:
 	bool HandleHDRToggle();
 	bool SuperResValid();
 	bool RTXVideoHDRValid();
+	void SleepToSync(CRefTime& rtClock, const REFERENCE_TIME& rtStart);
 
 public:
 	HRESULT SetDevice(ID3D11Device *pDevice, ID3D11DeviceContext *pContext, const bool bDecoderDevice);

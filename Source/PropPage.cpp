@@ -97,6 +97,7 @@ void CVRMainPPage::SetControls()
 	SendDlgItemMessageW(IDC_COMBO8, CB_SETCURSEL, m_SetsPP.iVPSuperRes, 0);
 	CheckDlgButton(IDC_CHECK19, m_SetsPP.bVPRTXVideoHDR       ? BST_CHECKED : BST_UNCHECKED);
 	CheckDlgButton(IDC_CHECK20, m_SetsPP.bVPSuperResIfScaling ? BST_CHECKED : BST_UNCHECKED);
+	CheckDlgButton(IDC_CHECK21, m_SetsPP.bVPFrameSyncing      ? BST_CHECKED : BST_UNCHECKED);
 
 	CheckDlgButton(IDC_CHECK18, m_SetsPP.bHdrPreferDoVi       ? BST_CHECKED : BST_UNCHECKED);
 	CheckDlgButton(IDC_CHECK12, m_SetsPP.bHdrPassthrough      ? BST_CHECKED : BST_UNCHECKED);
@@ -149,6 +150,7 @@ void CVRMainPPage::EnableControls()
 		GetDlgItem(IDC_COMBO8).EnableWindow(bEnable);
 		GetDlgItem(IDC_CHECK19).EnableWindow(bEnable);
 		GetDlgItem(IDC_CHECK20).EnableWindow(bEnable && m_SetsPP.iVPSuperRes);
+		GetDlgItem(IDC_CHECK21).EnableWindow(bEnable);
 	}
 }
 
@@ -197,6 +199,7 @@ HRESULT CVRMainPPage::OnActivate()
 		GetDlgItem(IDC_COMBO8).EnableWindow(FALSE);
 		GetDlgItem(IDC_CHECK19).EnableWindow(FALSE);
 		GetDlgItem(IDC_CHECK20).EnableWindow(FALSE);
+		GetDlgItem(IDC_CHECK21).EnableWindow(FALSE);
 	}
 
 	EnableControls();
@@ -287,6 +290,7 @@ INT_PTR CVRMainPPage::OnReceiveMessage(HWND hwnd, UINT uMsg, WPARAM wParam, LPAR
 				GetDlgItem(IDC_COMBO8).EnableWindow(m_SetsPP.bUseD3D11 && IsWindows10OrGreater());
 				GetDlgItem(IDC_CHECK19).EnableWindow(m_SetsPP.bUseD3D11 && IsWindows10OrGreater());
 				GetDlgItem(IDC_CHECK20).EnableWindow(m_SetsPP.iVPSuperRes && m_SetsPP.bUseD3D11 && IsWindows10OrGreater());
+				GetDlgItem(IDC_CHECK21).EnableWindow(m_SetsPP.bUseD3D11 && IsWindows10OrGreater());
 				return (LRESULT)1;
 			}
 			if (nID == IDC_CHECK6) {
@@ -362,6 +366,11 @@ INT_PTR CVRMainPPage::OnReceiveMessage(HWND hwnd, UINT uMsg, WPARAM wParam, LPAR
 			}
 			if (nID == IDC_CHECK20) {
 				m_SetsPP.bVPSuperResIfScaling = IsDlgButtonChecked(IDC_CHECK20) == BST_CHECKED;
+				SetDirty();
+				return (LRESULT)1;
+			}
+			if (nID == IDC_CHECK21) {
+				m_SetsPP.bVPFrameSyncing = IsDlgButtonChecked(IDC_CHECK21) == BST_CHECKED;
 				SetDirty();
 				return (LRESULT)1;
 			}

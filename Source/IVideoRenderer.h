@@ -97,6 +97,7 @@ struct Settings_t {
 	int iVPSuperRes;
 	bool bVPRTXVideoHDR;
 	bool bVPSuperResIfScaling;
+	bool bVPFrameSyncing;
 	int  iChromaScaling;
 	int  iUpscaling;
 	int  iDownscaling;

@@ -401,6 +401,7 @@ CDX11VideoProcessor::CDX11VideoProcessor(CMpcVideoRenderer* pFilter, const Setti
 	m_iVPSuperRes          = config.iVPSuperRes;
 	m_bVPRTXVideoHDR       = config.bVPRTXVideoHDR;
 	m_bVPSuperResIfScaling = config.bVPSuperResIfScaling;
+	m_bVPFrameSyncing      = config.bVPFrameSyncing;
 
 	m_nCurrentAdapter = -1;
 
@@ -2071,6 +2072,75 @@ BOOL CDX11VideoProcessor::GetAlignmentSize(const CMediaType& mt, SIZE& Size)
 	return FALSE;
 }
 
+void CDX11VideoProcessor::SleepToSync(CRefTime& rtClock, const REFERENCE_TIME& rtStart)
+{
+	if (!m_bVPFrameSyncing)
+		return;
+
+	//with this we more finely sync the frames based on how much offset we are from 0ms
+	static LONG sync_miss = 1l;
+	//frame sync variance. we want to offset our average by this amount
+	//	so we don't sometimes overshoot 0ms
+	static LONG delta = 1l;
+
+	//dynamic sync adjustment, just in case load changes or stuttering happens
+	//	we want to ride as close to the perfect sync, preferring to ride just below
+	if (m_pFilter->m_filterState == State_Running) {
+		//no need to update every frame
+		//would case too much fluctuations
+		//prefer to have smoothness over perfect sync
+		static int delay1 = m_pFilter->m_DrawStats.GetAverageFps() * 2;
+		delay1--;
+		static int delay2 = m_pFilter->m_DrawStats.GetAverageFps() * 2;
+		delay2--;
+
+		if (delay1 < 0)
+		{
+			delay1 = 0;
+			auto avg_sync_ms = m_Syncs.Average() / 10000;
+			//we overshot, correct for next frame
+			if (m_RenderStats.syncoffset > 10000 && avg_sync_ms > -2)
+			{
+				sync_miss++;
+				delay1 = m_pFilter->m_DrawStats.GetAverageFps() * 2;
+			}
+			//we're speeding up, slow the frames down
+			else if (m_RenderStats.syncoffset < -20000 && sync_miss > 1 && avg_sync_ms < -1)
+			{
+				sync_miss--;
+				delay1 = m_pFilter->m_DrawStats.GetAverageFps() * 2;
+			}
+		}
+		if (delay2 < 0)
+		{
+			//recalc the current delta
+			delay2 = m_pFilter->m_DrawStats.GetAverageFps() * 2;
+			std::pair<int, int> minmax = m_Syncs.MinMax();
+			int delta_temp = (abs(minmax.first - minmax.second) + 5000) / (2 * 10000) + 1;
+			//reduce the sudden changes and smooth it out
+			if (delta_temp > delta)
+				delta++;
+			else if (delta_temp < delta)
+				delta--;
+			//if there's very high delta, then something is going wrong
+			//we just want to minimize the normal fluctuations
+			delta = std::clamp(delta, 0l, 5l);
+		}
+
+		m_pFilter->StreamTime(rtClock);
+		LONG us_to_ideal_time = (rtClock - rtStart) / 10l + delta * 1000l;
+		//just for good measure
+		us_to_ideal_time = std::clamp(us_to_ideal_time, -40000l, 40000l);
+
+		//if we are several milliseconds before the time when this frame should appear on screen,
+		//	sleep until that time comes to sync up.
+		//offset it by one ms just to account for code runtime,
+		//	better to be slightly before than to overshoot and miss a frame
+		if (us_to_ideal_time < -1000l * (2 + sync_miss))
+			std::this_thread::sleep_for(std::chrono::microseconds(abs(us_to_ideal_time + (1l + sync_miss) * 1000l)));
+	}
+}
+
 HRESULT CDX11VideoProcessor::ProcessSample(IMediaSample* pSample)
 {
 	REFERENCE_TIME rtStart, rtEnd;
@@ -2089,6 +2159,7 @@ HRESULT CDX11VideoProcessor::ProcessSample(IMediaSample* pSample)
 		return hr;
 	}
 
+	SleepToSync(rtClock, rtStart);
 	// always Render(1) a frame after CopySample()
 	hr = Render(1);
 	m_pFilter->m_DrawStats.Add(GetPreciseTick());
@@ -2110,13 +2181,14 @@ HRESULT CDX11VideoProcessor::ProcessSample(IMediaSample* pSample)
 			return S_FALSE; // skip frame
 		}
 
+		rtStart += rtFrameDur / 2;
+		SleepToSync(rtClock, rtStart);
 		hr = Render(2);
 		m_pFilter->m_DrawStats.Add(GetPreciseTick());
 		if (m_pFilter->m_filterState == State_Running) {
 			m_pFilter->StreamTime(rtClock);
 		}
 
-		rtStart += rtFrameDur / 2;
 		m_RenderStats.syncoffset = rtClock - rtStart;
 
 		so = (int)std::clamp(m_RenderStats.syncoffset, -UNITS, UNITS);
@@ -3461,6 +3533,7 @@ void CDX11VideoProcessor::Configure(const Settings_t& config)
 	m_bInterpolateAt50pct  = config.bInterpolateAt50pct;
 	m_bVBlankBeforePresent = config.bVBlankBeforePresent;
 	m_bDeintBlend          = config.bDeintBlend;
+	m_bVPFrameSyncing      = config.bVPFrameSyncing;
 
 	// checking what needs to be changed
 
@@ -3994,6 +4067,33 @@ HRESULT CDX11VideoProcessor::DrawStats(ID3D11Texture2D* pRenderTarget)
 			so_max / 10000.0f,
 			sod_min / 10000.0f,
 			sod_max / 10000.0f);
+	}
+
+	//log the average frametime variance and desync
+	const auto& devs = m_SyncDevs.Data();
+	const auto dev_size = m_SyncDevs.Size();
+	if (dev_size > 0)
+	{
+		LONGLONG avg = 0;
+		for (unsigned int i = 0; i < dev_size; i++)
+		{
+			avg += abs(devs[i]);
+		}
+		avg /= dev_size;
+		str += std::format(L",\n  avg dev: {:3.3f} ms", (float)avg / 10000.f);
+	}
+
+	const auto& syncs = m_Syncs.Data();
+	const auto sync_size = m_Syncs.Size();
+	if (sync_size > 0)
+	{
+		LONGLONG avg = 0;
+		for (unsigned int i = 0; i < sync_size; i++)
+		{
+			avg += (syncs[i]);
+		}
+		avg /= sync_size;
+		str += std::format(L", avg sync: {:+3.3f} ms", (float)avg / 10000.f);
 	}
 #endif
 #if TEST_TICKS
