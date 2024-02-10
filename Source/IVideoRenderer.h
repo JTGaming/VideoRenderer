@@ -125,31 +125,32 @@ struct Settings_t {
 			bUseD3D11                   = false;
 		}
 		bShowStats                      = false;
-		iResizeStats                    = 0;
-		iTexFormat                      = TEXFMT_AUTOINT;
+		iResizeStats                    = 1;
+		iTexFormat                      = TEXFMT_16FLOAT;
 		VPFmts.bNV12                    = true;
 		VPFmts.bP01x                    = true;
 		VPFmts.bYUY2                    = true;
 		VPFmts.bOther                   = true;
 		bDeintDouble                    = true;
-		bVPScaling                      = true;
-		iVPSuperRes                     = SUPERRES_Disable;
-		bVPRTXVideoHDR                  = false;
+		bVPScaling                      = false;
+		iVPSuperRes                     = SUPERRES_Always;
+		bVPRTXVideoHDR                  = true;
 		bVPSuperResIfScaling            = false;
-		iChromaScaling                  = CHROMA_Bilinear;
-		iUpscaling                      = UPSCALE_CatmullRom;
-		iDownscaling                    = DOWNSCALE_Hamming;
-		bInterpolateAt50pct             = true;
+		bVPFrameSyncing                 = true;
+		iChromaScaling                  = CHROMA_CatmullRom;
+		iUpscaling                      = UPSCALE_Lanczos3;
+		iDownscaling                    = DOWNSCALE_Lanczos;
+		bInterpolateAt50pct             = false;
 		bUseDither                      = true;
 		bDeintBlend                     = false;
 		iSwapEffect                     = SWAPEFFECT_Flip;
 		bExclusiveFS                    = false;
 		bVBlankBeforePresent            = false;
 		bReinitByDisplay                = false;
-		bHdrPreferDoVi                  = false;
+		bHdrPreferDoVi                  = true;
 		if (IsWindows10OrGreater()) {
 			bHdrPassthrough             = true;
-			iHdrToggleDisplay           = HDRTD_On;
+			iHdrToggleDisplay           = HDRTD_Disabled;
 		} else {
 			bHdrPassthrough             = false;
 			iHdrToggleDisplay           = HDRTD_Disabled;
