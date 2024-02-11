@@ -77,9 +77,9 @@ public:
 		m_exFmt   = exFmt;
 
 		// replace values that are not included in the DXVA2 specification to obtain a more stable result for subsequent correction
-		if (m_exFmt.VideoTransferMatrix > DXVA2_VideoTransferMatrix_SMPTE240M) { m_exFmt.VideoTransferMatrix = DXVA2_VideoTransferMatrix_BT709; }
-		if (m_exFmt.VideoPrimaries > DXVA2_VideoPrimaries_SMPTE_C) { m_exFmt.VideoPrimaries = DXVA2_VideoPrimaries_BT709; }
-		if (m_exFmt.VideoTransferFunction > DXVA2_VideoTransFunc_28) { m_exFmt.VideoTransferFunction = DXVA2_VideoTransFunc_709; }
+		if (m_exFmt.VideoTransferMatrix > MFVideoTransferMatrix_SMPTE240M) { m_exFmt.VideoTransferMatrix = MFVideoTransferMatrix_BT709; }
+		if (m_exFmt.VideoPrimaries > MFVideoPrimaries_SMPTE_C) { m_exFmt.VideoPrimaries = MFVideoPrimaries_BT709; }
+		if (m_exFmt.VideoTransferFunction > MFVideoTransFunc_28) { m_exFmt.VideoTransferFunction = MFVideoTransFunc_709; }
 	}
 
 	DXVA2_VideoSample* GetNextVideoSample()

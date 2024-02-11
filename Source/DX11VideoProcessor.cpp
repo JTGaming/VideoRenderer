@@ -1165,7 +1165,7 @@ void CDX11VideoProcessor::SetGraphSize()
 		CalcStatsFont();
 		if (S_OK == m_Font3D.CreateFontBitmap(L"Consolas", m_StatsFontH, 0)) {
 			SIZE charSize = m_Font3D.GetMaxCharMetric();
-			m_StatsRect.right  = m_StatsRect.left + 61 * charSize.cx + 5 + 3;
+			m_StatsRect.right  = m_StatsRect.left + 64 * charSize.cx + 5 + 3;
 			m_StatsRect.bottom = m_StatsRect.top + 19 * charSize.cy + 5 + 3;
 		}
 		m_StatsBackground.Set(m_StatsRect, rtSize, D3DCOLOR_ARGB(80, 0, 0, 0));
@@ -1810,9 +1810,9 @@ BOOL CDX11VideoProcessor::InitMediaType(const CMediaType* pmt)
 		hr = InitializeD3D11VP(FmtParams, origW, origH);
 		if (SUCCEEDED(hr)) {
 			UINT resId = 0;
-			bool bTransFunc22 = m_srcExFmt.VideoTransferFunction == DXVA2_VideoTransFunc_22
-								|| m_srcExFmt.VideoTransferFunction == DXVA2_VideoTransFunc_709
-								|| m_srcExFmt.VideoTransferFunction == DXVA2_VideoTransFunc_240M;
+			bool bTransFunc22 = m_srcExFmt.VideoTransferFunction == MFVideoTransFunc_22
+								|| m_srcExFmt.VideoTransferFunction == MFVideoTransFunc_709
+								|| m_srcExFmt.VideoTransferFunction == MFVideoTransFunc_240M;
 
 			if (m_srcExFmt.VideoTransferFunction == MFVideoTransFunc_2084 && !(m_bHdrPassthroughSupport && m_bHdrPassthrough) && m_bConvertToSdr) {
 				resId = m_D3D11VP.IsPqSupported() ? IDF_PS_11_CONVERT_PQ_TO_SDR : IDF_PS_11_FIXCONVERT_PQ_TO_SDR;
@@ -3872,9 +3872,9 @@ void CDX11VideoProcessor::UpdateStatsPresent()
 {
 	DXGI_SWAP_CHAIN_DESC1 swapchain_desc;
 	if (m_pDXGISwapChain1 && S_OK == m_pDXGISwapChain1->GetDesc1(&swapchain_desc)) {
-		m_strStatsPresent.assign(L"\nPresentation  : ");
+		m_strStatsPresent.assign(L"\nPresentation    : ");
 		if (m_bVBlankBeforePresent && m_pDXGIOutput) {
-			m_strStatsPresent.append(L"wait VBlank, ");
+			m_strStatsPresent.append(L"wait for VBlank, ");
 		}
 		switch (swapchain_desc.SwapEffect) {
 		case DXGI_SWAP_EFFECT_DISCARD:
@@ -3884,10 +3884,10 @@ void CDX11VideoProcessor::UpdateStatsPresent()
 			m_strStatsPresent.append(L"Sequential");
 			break;
 		case DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL:
-			m_strStatsPresent.append(L"Flip sequential");
+			m_strStatsPresent.append(L"Flip Sequential");
 			break;
 		case DXGI_SWAP_EFFECT_FLIP_DISCARD:
-			m_strStatsPresent.append(L"Flip discard");
+			m_strStatsPresent.append(L"Flip Discard");
 			break;
 		}
 		m_strStatsPresent.append(L", ");
@@ -3902,16 +3902,16 @@ void CDX11VideoProcessor::UpdateStatsStatic()
 
 		UpdateStatsInputFmt();
 
-		m_strStatsVProc.assign(L"\nVideoProcessor: ");
+		m_strStatsVProc.assign(L"\nVideo Processor : ");
 		if (m_D3D11VP.IsReady()) {
-			m_strStatsVProc += std::format(L"D3D11 VP, output to {}", DXGIFormatToString(m_D3D11OutputFmt));
+			m_strStatsVProc += std::format(L"D3D11 VP, Output to {}", DXGIFormatToString(m_D3D11OutputFmt));
 		} else {
 			m_strStatsVProc.append(L"Shaders");
 			if (m_srcParams.Subsampling == 420 || m_srcParams.Subsampling == 422) {
-				m_strStatsVProc.append(L", Chroma scaling: ");
+				m_strStatsVProc.append(L", Chroma Scaling: ");
 				switch (m_iChromaScaling) {
 				case CHROMA_Nearest:
-					m_strStatsVProc.append(L"Nearest-neighbor");
+					m_strStatsVProc.append(L"Nearest-Neighbor");
 					break;
 				case CHROMA_Bilinear:
 					m_strStatsVProc.append(L"Bilinear");
@@ -3922,7 +3922,7 @@ void CDX11VideoProcessor::UpdateStatsStatic()
 				}
 			}
 		}
-		m_strStatsVProc += std::format(L"\nInternalFormat: {}", DXGIFormatToString(m_InternalTexFmt));
+		m_strStatsVProc += std::format(L"\nInternal Format : {}", DXGIFormatToString(m_InternalTexFmt));
 
 		//add debug output so users know when RTX Video HDR is enabled
 		//might want to rename this feature to 'Auto HDR' or something else in the future,
@@ -3930,9 +3930,9 @@ void CDX11VideoProcessor::UpdateStatsStatic()
 		//	RTX Video HDR seems to be more recognizable for users.
 		bool sourceHDR = SourceIsHDR();
 		if (sourceHDR || m_bVPUseRTXVideoHDR) {
-			m_strStatsHDR.assign(L"\nHDR processing: ");
+			m_strStatsHDR.assign(L"\nHDR Processing  : ");
 			if (m_bVPUseRTXVideoHDR && !sourceHDR)
-				m_strStatsHDR.append(L"RTX Video HDR*");
+				m_strStatsHDR.append(L"RTX Video HDR");
 			else if (m_bHdrPassthroughSupport && m_bHdrPassthrough) {
 				m_strStatsHDR.append(L"Passthrough");
 				if (m_lastHdr10.bValid) {
@@ -3941,7 +3941,7 @@ void CDX11VideoProcessor::UpdateStatsStatic()
 			} else if (m_bConvertToSdr) {
 				m_strStatsHDR.append(L"Convert to SDR");
 			} else {
-				m_strStatsHDR.append(L"Not used");
+				m_strStatsHDR.append(L"Not Used");
 			}
 		} else {
 			m_strStatsHDR.clear();
@@ -3991,11 +3991,11 @@ HRESULT CDX11VideoProcessor::DrawStats(ID3D11Texture2D* pRenderTarget)
 	str.reserve(700);
 	str.assign(m_strStatsHeader);
 	str.append(m_strStatsDispInfo);
-	str += std::format(L"\nGraph. Adapter: {}", m_strAdapterDescription);
+	str += std::format(L"\nGraphics Adapter: {}", m_strAdapterDescription);
 
 	wchar_t frametype = (m_SampleFormat != D3D11_VIDEO_FRAME_FORMAT_PROGRESSIVE) ? 'i' : 'p';
 	str += std::format(
-		L"\nFrame rate    : {:7.3f}{},{:7.3f}",
+		L"\nFrame Rate      : {:7.3f}{},{:7.3f}p",
 		m_pFilter->m_FrameStats.GetAverageFps(),
 		frametype,
 		m_pFilter->m_DrawStats.GetAverageFps()
@@ -4003,7 +4003,7 @@ HRESULT CDX11VideoProcessor::DrawStats(ID3D11Texture2D* pRenderTarget)
 
 	str.append(m_strStatsInputFmt);
 	if (m_Dovi.bValid) {
-		str.append(L", MetaData: DolbyVision");
+		str.append(L", Metadata: Dolby Vision");
 		if (m_Dovi.bHasMMR) {
 			str.append(L"(MMR)");
 		}
@@ -4013,9 +4013,9 @@ HRESULT CDX11VideoProcessor::DrawStats(ID3D11Texture2D* pRenderTarget)
 	const int dstW = m_videoRect.Width();
 	const int dstH = m_videoRect.Height();
 	if (m_iRotation) {
-		str += std::format(L"\nScaling       : {}x{} r{}\u00B0> {}x{}", m_srcRectWidth, m_srcRectHeight, m_iRotation, dstW, dstH);
+		str += std::format(L"\nScaling         : {}x{} r{}\u00B0> {}x{}", m_srcRectWidth, m_srcRectHeight, m_iRotation, dstW, dstH);
 	} else {
-		str += std::format(L"\nScaling       : {}x{} -> {}x{}", m_srcRectWidth, m_srcRectHeight, dstW, dstH);
+		str += std::format(L"\nScaling         : {}x{} -> {}x{}", m_srcRectWidth, m_srcRectHeight, dstW, dstH);
 	}
 	if (m_srcRectWidth != dstW || m_srcRectHeight != dstH) {
 		//D3D scaling is manually forced on if SuperRes is enabled
@@ -4036,39 +4036,39 @@ HRESULT CDX11VideoProcessor::DrawStats(ID3D11Texture2D* pRenderTarget)
 	}
 
 	if (m_bVPUseSuperRes) {
-		str.append(L" SuperResolution*");
+		str.append(L" Super Resolution");
 	}
 
 	if (m_strCorrection || m_pPostScaleShaders.size() || m_bDitherUsed) {
-		str.append(L"\nPostProcessing:");
+		str.append(L"\nPost-Processing :");
 		if (m_strCorrection) {
 			str += std::format(L" {},", m_strCorrection);
 		}
 		if (m_pPostScaleShaders.size()) {
-			str += std::format(L" shaders[{}],", m_pPostScaleShaders.size());
+			str += std::format(L" Shaders[{}],", m_pPostScaleShaders.size());
 		}
 		if (m_bDitherUsed) {
-			str.append(L" dither");
+			str.append(L" Dither");
 		}
 		str_trim_end(str, ',');
 	}
 	str.append(m_strStatsHDR);
 	str.append(m_strStatsPresent);
 
-	str += std::format(L"\nFrames: {:5}, skipped: {}/{}, failed: {}",
+	str += std::format(L"\nFrames          : {}, skipped: {}/{}, failed: {}",
 		m_pFilter->m_FrameStats.GetFrames(), m_pFilter->m_DrawStats.m_dropped, m_RenderStats.dropped2, m_RenderStats.failed);
-	str += std::format(L"\nTimes(ms): Copy{:3}, Paint{:3}, Present{:3}",
+	str += std::format(L"\nTimes           : copy:{:3} ms, paint:{:3} ms, present:{:3} ms",
 		m_RenderStats.copyticks * 1000 / GetPreciseTicksPerSecondI(),
 		m_RenderStats.paintticks * 1000 / GetPreciseTicksPerSecondI(),
 		m_RenderStats.presentticks * 1000 / GetPreciseTicksPerSecondI());
 
-	str += std::format(L"\nSync offset   : {:+3} ms", (m_RenderStats.syncoffset + 5000) / 10000);
+	str += std::format(L"\nSync offset     : {:+3} ms", (m_RenderStats.syncoffset + 5000) / 10000);
 
 #if SYNC_OFFSET_EX
 	{
 		const auto [so_min, so_max] = m_Syncs.MinMax();
 		const auto [sod_min, sod_max] = m_SyncDevs.MinMax();
-		str += std::format(L", range[{:+3.0f};{:+3.0f}], max change{:+3.0f}/{:+3.0f}",
+		str += std::format(L", range [{:+3.0f};{:+3.0f}], max change {:+3.0f}/{:+3.0f}",
 			so_min / 10000.0f,
 			so_max / 10000.0f,
 			sod_min / 10000.0f,

@@ -129,7 +129,7 @@ void CVideoProcessor::SetDisplayInfo(const DisplayConfig_t& dc, const bool prima
 	if (primary) {
 		m_strStatsDispInfo.append(L" Primary");
 	}
-	m_strStatsDispInfo.append(fullscreen ? L" fullscreen" : L" windowed");
+	m_strStatsDispInfo.append(fullscreen ? L" Fullscreen" : L" Windowed");
 
 	if (str.size()) {
 		m_strStatsDispInfo.append(str);
@@ -138,13 +138,13 @@ void CVideoProcessor::SetDisplayInfo(const DisplayConfig_t& dc, const bool prima
 
 void CVideoProcessor::UpdateStatsInputFmt()
 {
-	m_strStatsInputFmt.assign(L"\nInput format  : ");
+	m_strStatsInputFmt.assign(L"\nInput Format    : ");
 
 	if (m_iSrcFromGPU == 9) {
 		m_strStatsInputFmt.append(L"DXVA2_");
 	}
 	else if (m_iSrcFromGPU == 11) {
-		m_strStatsInputFmt.append(L"D3D11_");
+		m_strStatsInputFmt.append(L"D3D11_"); 
 	}
 	m_strStatsInputFmt.append(m_srcParams.str);
 
@@ -160,28 +160,28 @@ void CVideoProcessor::UpdateStatsInputFmt()
 		LPCSTR strs[6] = {};
 		GetExtendedFormatString(strs, m_srcExFmt, m_srcParams.CSType);
 		m_strStatsInputFmt += std::format(L"\n  Range: {}", A2WStr(strs[1]));
-		if (m_decExFmt.NominalRange == DXVA2_NominalRange_Unknown) {
+		if (m_decExFmt.NominalRange == MFNominalRange_Unknown) {
 			m_strStatsInputFmt += L'*';
 		};
-		m_strStatsInputFmt += std::format(L", Matrix: {}", A2WStr(strs[2]));
-		if (m_decExFmt.VideoTransferMatrix == DXVA2_VideoTransferMatrix_Unknown) {
+		m_strStatsInputFmt += std::format(L", Color Matrix: {}", A2WStr(strs[2]));
+		if (m_decExFmt.VideoTransferMatrix == MFVideoTransferMatrix_Unknown) {
 			m_strStatsInputFmt += L'*';
 		};
-		if (m_decExFmt.VideoLighting != DXVA2_VideoLighting_Unknown) {
+		if (m_decExFmt.VideoLighting != MFVideoLighting_Unknown) {
 			// display Lighting only for values other than Unknown, but this never happens
 			m_strStatsInputFmt += std::format(L", Lighting: {}", A2WStr(strs[3]));
 		};
 		m_strStatsInputFmt += std::format(L"\n  Primaries: {}", A2WStr(strs[4]));
-		if (m_decExFmt.VideoPrimaries == DXVA2_VideoPrimaries_Unknown) {
+		if (m_decExFmt.VideoPrimaries == MFVideoPrimaries_Unknown) {
 			m_strStatsInputFmt += L'*';
 		};
-		m_strStatsInputFmt += std::format(L", Function: {}", A2WStr(strs[5]));
-		if (m_decExFmt.VideoTransferFunction == DXVA2_VideoTransFunc_Unknown) {
+		m_strStatsInputFmt += std::format(L", Transfer Function: {}", A2WStr(strs[5]));
+		if (m_decExFmt.VideoTransferFunction == MFVideoTransFunc_Unknown) {
 			m_strStatsInputFmt += L'*';
 		};
 		if (m_srcParams.Subsampling == 420) {
-			m_strStatsInputFmt += std::format(L"\n  ChromaLocation: {}", A2WStr(strs[0]));
-			if (m_decExFmt.VideoChromaSubsampling == DXVA2_VideoChromaSubsampling_Unknown) {
+			m_strStatsInputFmt += std::format(L"\n  Chroma Location: {}", A2WStr(strs[0]));
+			if (m_decExFmt.VideoChromaSubsampling == MFVideoChromaSubsampling_Unknown) {
 				m_strStatsInputFmt += L'*';
 			};
 		}

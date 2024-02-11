@@ -115,17 +115,17 @@ void ShaderGetPixels(
 	const char* strChromaPos2 = "";
 	if (fmtParams.Subsampling == 420) {
 		switch (chromaSubsampling) {
-		case DXVA2_VideoChromaSubsampling_Cosited:
+		case MFVideoChromaSubsampling_Cosited:
 			strChromaPos = "+float2(dx*0.5,dy*0.5)";
 			strChromaPos2 = "+float2(-0.25,-0.25)";
 			DLog(L"ConvertColorShader: chroma location - Co-sited");
 			break;
-		case DXVA2_VideoChromaSubsampling_MPEG1:
+		case MFVideoChromaSubsampling_MPEG1:
 			//strChromaPos = "";
 			strChromaPos2 = "+float2(-0.5,-0.5)";
 			DLog(L"ConvertColorShader: chroma location - MPEG-1");
 			break;
-		case DXVA2_VideoChromaSubsampling_MPEG2:
+		case MFVideoChromaSubsampling_MPEG2:
 		default:
 			strChromaPos = "+float2(dx*0.5,0)";
 			strChromaPos2 = "+float2(-0.25,-0.5)";
@@ -809,15 +809,15 @@ HRESULT GetShaderConvertColor(
 	else if (bBT2020Primaries) {
 		std::string toLinear;
 		switch (exFmt.VideoTransferFunction) {
-		case DXVA2_VideoTransFunc_10:   toLinear = "\\\\nothing\n";                  break;
-		case DXVA2_VideoTransFunc_18:   toLinear = "color = pow(color, 1.8);\n"; break;
-		case DXVA2_VideoTransFunc_20:   toLinear = "color = pow(color, 2.0);\n"; break;
+		case MFVideoTransFunc_10:   toLinear = "\\\\nothing\n";                  break;
+		case MFVideoTransFunc_18:   toLinear = "color = pow(color, 1.8);\n"; break;
+		case MFVideoTransFunc_20:   toLinear = "color = pow(color, 2.0);\n"; break;
 		case MFVideoTransFunc_HLG: // HLG compatible with SDR
-		case DXVA2_VideoTransFunc_22:
-		case DXVA2_VideoTransFunc_709:
-		case DXVA2_VideoTransFunc_240M: toLinear = "color = pow(color, 2.2);\n"; break;
-		case DXVA2_VideoTransFunc_sRGB: toLinear = "color = pow(color, 2.2);\n"; break;
-		case DXVA2_VideoTransFunc_28:   toLinear = "color = pow(color, 2.8);\n"; break;
+		case MFVideoTransFunc_22:
+		case MFVideoTransFunc_709:
+		case MFVideoTransFunc_240M: toLinear = "color = pow(color, 2.2);\n"; break;
+		case MFVideoTransFunc_sRGB: toLinear = "color = pow(color, 2.2);\n"; break;
+		case MFVideoTransFunc_28:   toLinear = "color = pow(color, 2.8);\n"; break;
 		case MFVideoTransFunc_26:       toLinear = "color = pow(color, 2.6);\n"; break;
 		}
 

@@ -351,12 +351,12 @@ HRESULT CDXVA2VP::InitVideoProcessor(
 
 	m_BltParams.DestFormat.value = 0; // output to RGB
 	m_BltParams.DestFormat.SampleFormat = DXVA2_SampleProgressiveFrame; // output to progressive RGB
-	if (exFmt.NominalRange == DXVA2_NominalRange_0_255 && (m_VendorId == PCIV_NVIDIA || m_VendorId == PCIV_AMDATI)) {
+	if (exFmt.NominalRange == MFNominalRange_0_255 && (m_VendorId == PCIV_NVIDIA || m_VendorId == PCIV_AMDATI)) {
 		// hack for Nvidia and AMD, nothing helps Intel
-		m_BltParams.DestFormat.NominalRange = DXVA2_NominalRange_16_235;
+		m_BltParams.DestFormat.NominalRange = MFNominalRange_16_235;
 	} else {
 		// output to full range RGB
-		m_BltParams.DestFormat.NominalRange = DXVA2_NominalRange_0_255;
+		m_BltParams.DestFormat.NominalRange = MFNominalRange_0_255;
 	}
 
 	m_srcFormat   = inputFmt;

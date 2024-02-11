@@ -761,16 +761,16 @@ void set_colorspace(const DXVA2_ExtendedFormat extfmt, mp_colorspace& colorspace
 	}
 
 	switch (extfmt.NominalRange) {
-	case DXVA2_NominalRange_0_255:   colorspace.levels = MP_CSP_LEVELS_PC;   break;
-	case DXVA2_NominalRange_16_235:  colorspace.levels = MP_CSP_LEVELS_TV;   break;
+	case MFNominalRange_0_255:   colorspace.levels = MP_CSP_LEVELS_PC;   break;
+	case MFNominalRange_16_235:  colorspace.levels = MP_CSP_LEVELS_TV;   break;
 	default:
 		colorspace.levels = MP_CSP_LEVELS_AUTO;
 	}
 
 	switch (extfmt.VideoTransferMatrix) {
-	case DXVA2_VideoTransferMatrix_BT709:     colorspace.space = MP_CSP_BT_709;     break;
-	case DXVA2_VideoTransferMatrix_BT601:     colorspace.space = MP_CSP_BT_601;     break;
-	case DXVA2_VideoTransferMatrix_SMPTE240M: colorspace.space = MP_CSP_SMPTE_240M; break;
+	case MFVideoTransferMatrix_BT709:     colorspace.space = MP_CSP_BT_709;     break;
+	case MFVideoTransferMatrix_BT601:     colorspace.space = MP_CSP_BT_601;     break;
+	case MFVideoTransferMatrix_SMPTE240M: colorspace.space = MP_CSP_SMPTE_240M; break;
 	case MFVideoTransferMatrix_BT2020_10:     colorspace.space = MP_CSP_BT_2020_NC; break;
 	case VIDEOTRANSFERMATRIX_YCgCo:           colorspace.space = MP_CSP_YCGCO;      break;
 	default:
@@ -778,11 +778,11 @@ void set_colorspace(const DXVA2_ExtendedFormat extfmt, mp_colorspace& colorspace
 	}
 
 	switch (extfmt.VideoPrimaries) {
-	case DXVA2_VideoPrimaries_BT709:         colorspace.primaries = MP_CSP_PRIM_BT_709;     break;
-	case DXVA2_VideoPrimaries_BT470_2_SysM:  colorspace.primaries = MP_CSP_PRIM_BT_470M;    break;
-	case DXVA2_VideoPrimaries_BT470_2_SysBG: colorspace.primaries = MP_CSP_PRIM_BT_601_625; break;
-	case DXVA2_VideoPrimaries_SMPTE170M:
-	case DXVA2_VideoPrimaries_SMPTE240M:     colorspace.primaries = MP_CSP_PRIM_BT_601_525; break;
+	case MFVideoPrimaries_BT709:         colorspace.primaries = MP_CSP_PRIM_BT_709;     break;
+	case MFVideoPrimaries_BT470_2_SysM:  colorspace.primaries = MP_CSP_PRIM_BT_470M;    break;
+	case MFVideoPrimaries_BT470_2_SysBG: colorspace.primaries = MP_CSP_PRIM_BT_601_625; break;
+	case MFVideoPrimaries_SMPTE170M:
+	case MFVideoPrimaries_SMPTE240M:     colorspace.primaries = MP_CSP_PRIM_BT_601_525; break;
 	case MFVideoPrimaries_BT2020:            colorspace.primaries = MP_CSP_PRIM_BT_2020;    break;
 	case MFVideoPrimaries_DCI_P3:            colorspace.primaries = MP_CSP_PRIM_DCI_P3;     break;
 	default:
@@ -790,16 +790,16 @@ void set_colorspace(const DXVA2_ExtendedFormat extfmt, mp_colorspace& colorspace
 	}
 
 	switch (extfmt.VideoTransferFunction) {
-	case DXVA2_VideoTransFunc_10:      colorspace.gamma = MP_CSP_TRC_LINEAR;  break;
-	case DXVA2_VideoTransFunc_18:      colorspace.gamma = MP_CSP_TRC_GAMMA18; break;
-	case DXVA2_VideoTransFunc_20:      colorspace.gamma = MP_CSP_TRC_GAMMA20; break;
-	case DXVA2_VideoTransFunc_22:      colorspace.gamma = MP_CSP_TRC_GAMMA22; break;
-	case DXVA2_VideoTransFunc_709:
-	case DXVA2_VideoTransFunc_240M:
+	case MFVideoTransFunc_10:      colorspace.gamma = MP_CSP_TRC_LINEAR;  break;
+	case MFVideoTransFunc_18:      colorspace.gamma = MP_CSP_TRC_GAMMA18; break;
+	case MFVideoTransFunc_20:      colorspace.gamma = MP_CSP_TRC_GAMMA20; break;
+	case MFVideoTransFunc_22:      colorspace.gamma = MP_CSP_TRC_GAMMA22; break;
+	case MFVideoTransFunc_709:
+	case MFVideoTransFunc_240M:
 	case MFVideoTransFunc_2020_const:
 	case MFVideoTransFunc_2020:        colorspace.gamma = MP_CSP_TRC_BT_1886; break;
-	case DXVA2_VideoTransFunc_sRGB:    colorspace.gamma = MP_CSP_TRC_SRGB;    break;
-	case DXVA2_VideoTransFunc_28:      colorspace.gamma = MP_CSP_TRC_GAMMA28; break;
+	case MFVideoTransFunc_sRGB:    colorspace.gamma = MP_CSP_TRC_SRGB;    break;
+	case MFVideoTransFunc_28:      colorspace.gamma = MP_CSP_TRC_GAMMA28; break;
 	case MFVideoTransFunc_2084:        colorspace.gamma = MP_CSP_TRC_PQ;      break;
 	case MFVideoTransFunc_HLG:         colorspace.gamma = MP_CSP_TRC_HLG;     break;
 	default:
@@ -979,35 +979,35 @@ DXVA2_ExtendedFormat SpecifyExtendedFormat(DXVA2_ExtendedFormat exFormat, const 
 		// https://docs.microsoft.com/en-us/windows/desktop/api/dxva2api/ns-dxva2api-dxva2_extendedformat
 
 		if (fmtParams.Subsampling != 420) {
-			exFormat.VideoChromaSubsampling = DXVA2_VideoChromaSubsampling_Unknown;
+			exFormat.VideoChromaSubsampling = MFVideoChromaSubsampling_Unknown;
 		}
-		else if (exFormat.VideoChromaSubsampling == DXVA2_VideoChromaSubsampling_Unknown) {
-			exFormat.VideoChromaSubsampling = DXVA2_VideoChromaSubsampling_MPEG2;
-		}
-
-		if (exFormat.NominalRange == DXVA2_NominalRange_Unknown) {
-			exFormat.NominalRange = DXVA2_NominalRange_16_235;
+		else if (exFormat.VideoChromaSubsampling == MFVideoChromaSubsampling_Unknown) {
+			exFormat.VideoChromaSubsampling = MFVideoChromaSubsampling_MPEG2;
 		}
 
-		if (exFormat.VideoTransferMatrix == DXVA2_VideoTransferMatrix_Unknown) {
+		if (exFormat.NominalRange == MFNominalRange_Unknown) {
+			exFormat.NominalRange = MFNominalRange_16_235;
+		}
+
+		if (exFormat.VideoTransferMatrix == MFVideoTransferMatrix_Unknown) {
 			if (width <= 1024 && height <= 576) { // SD (more reliable way to determine SD than MicroSoft offers)
-				exFormat.VideoTransferMatrix = DXVA2_VideoTransferMatrix_BT601;
+				exFormat.VideoTransferMatrix = MFVideoTransferMatrix_BT601;
 			}
 			else { // HD
-				exFormat.VideoTransferMatrix = DXVA2_VideoTransferMatrix_BT709;
+				exFormat.VideoTransferMatrix = MFVideoTransferMatrix_BT709;
 			}
 		}
 
-		if (exFormat.VideoLighting == DXVA2_VideoLighting_Unknown) {
-			exFormat.VideoLighting = DXVA2_VideoLighting_dim;
+		if (exFormat.VideoLighting == MFVideoLighting_Unknown) {
+			exFormat.VideoLighting = MFVideoLighting_dim;
 		}
 
-		if (exFormat.VideoPrimaries == DXVA2_VideoPrimaries_Unknown) {
-			exFormat.VideoPrimaries = DXVA2_VideoPrimaries_BT709; // pick BT.709 to minimize damage
+		if (exFormat.VideoPrimaries == MFVideoPrimaries_Unknown) {
+			exFormat.VideoPrimaries = MFVideoPrimaries_BT709; // pick BT.709 to minimize damage
 		}
 
-		if (exFormat.VideoTransferFunction == DXVA2_VideoTransFunc_Unknown) {
-			exFormat.VideoTransferFunction = DXVA2_VideoTransFunc_709;
+		if (exFormat.VideoTransferFunction == MFVideoTransFunc_Unknown) {
+			exFormat.VideoTransferFunction = MFVideoTransFunc_709;
 		}
 	}
 
@@ -1016,15 +1016,15 @@ DXVA2_ExtendedFormat SpecifyExtendedFormat(DXVA2_ExtendedFormat exFormat, const 
 
 void GetExtendedFormatString(LPCSTR (&strs)[6], const DXVA2_ExtendedFormat exFormat, const ColorSystem_t colorSystem)
 {
-	static LPCSTR chromalocation[] = { "unknown", "Center(MPEG-1)", nullptr, nullptr, nullptr, "Left(MPEG-2)", "TopLeft(PAL DV)", "TopLeft(Co-sited)" };
-	static LPCSTR nominalrange[] = { "unknown", "0-255", "16-235", "48-208" };
-	static LPCSTR transfermatrix[] = { "unknown", "BT.709", "BT.601", "SMPTE 240M", "BT.2020", nullptr, nullptr, "YCgCo" };
-	static LPCSTR lighting[] = { "unknown", "bright", "office", "dim", "dark" };
-	static LPCSTR primaries[] = { "unknown", "Reserved", "BT.709", "BT.470-4 System M", "BT.470-4 System B,G",
-		"SMPTE 170M", "SMPTE 240M", "EBU Tech. 3213", "SMPTE C", "BT.2020" };
-	static LPCSTR transfunc[] = { "unknown", "Linear RGB", "1.8 gamma", "2.0 gamma", "2.2 gamma", "BT.709", "SMPTE 240M",
-		"sRGB", "2.8 gamma", "Log100", "Log316", "Symmetric BT.709", "Constant luminance BT.2020", "Non-constant luminance BT.2020",
-		"2.6 gamma", "SMPTE ST 2084 (PQ)", "ARIB STD-B67 (HLG)"};
+	static LPCSTR chromalocation[] = { "unknown", "Center(MPEG-1)", nullptr, nullptr, nullptr, "Left (MPEG-2)", "Top Left (PAL DV)", "Top Left (Co-sited)" };
+	static LPCSTR nominalrange[] = { "unknown", "0-255", "16-235", "48-208", "64-127" };
+	static LPCSTR transfermatrix[] = { "unknown", "BT.709", "BT.601", "SMPTE 240M", "BT.2020", nullptr, nullptr, "YCoCg" };
+	static LPCSTR lighting[] = { "unknown", "Bright", "Office", "Dim", "Dark" };
+	static LPCSTR primaries[] = { "unknown", "Reserved", "BT.709", "BT.470-4 System M", "BT.470-4 System B/G",
+		"SMPTE 170M", "SMPTE 240M", "EBU Tech. 3213", "SMPTE C", "BT.2020", "XYZ", "DCI-P3", "ACES" };
+	static LPCSTR transfunc[] = { "unknown", "Linear RGB", "Gamma 1.8", "Gamma 2.0", "Gamma 2.2", "BT.709", "SMPTE 240M",
+		"sRGB", "Gamma 2.8", "Log100", "Log316", "Symmetric BT.709", "Constant luminance BT.2020", "Non-constant luminance BT.2020",
+		"Gamma 2.6", "SMPTE ST.2084 (PQ)", "ARIB STD-B67 (HLG)"};
 
 	auto getDesc = [] (unsigned num, LPCSTR* descs, unsigned count) {
 		if (num < count && descs[num]) {

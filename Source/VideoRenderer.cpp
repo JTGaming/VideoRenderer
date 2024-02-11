@@ -1203,7 +1203,7 @@ STDMETHODIMP CMpcVideoRenderer::SaveSettings()
 		key.SetDWORDValue(OPT_VPSuperResolution,   m_Sets.iVPSuperRes);
 		key.SetDWORDValue(OPT_VPRTXVideoHDR,       m_Sets.bVPRTXVideoHDR);
 		key.SetDWORDValue(OPT_VPSuperResIfScaling, m_Sets.bVPSuperResIfScaling);
-		key.SetDWORDValue(OPT_VPSuperResIfScaling, m_Sets.bVPFrameSyncing);
+		key.SetDWORDValue(OPT_VPFrameSyncing,      m_Sets.bVPFrameSyncing);
 		key.SetDWORDValue(OPT_ChromaUpsampling,    m_Sets.iChromaScaling);
 		key.SetDWORDValue(OPT_Upscaling,           m_Sets.iUpscaling);
 		key.SetDWORDValue(OPT_Downscaling,         m_Sets.iDownscaling);

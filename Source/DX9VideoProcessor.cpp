@@ -986,8 +986,8 @@ void CDX9VideoProcessor::SetGraphSize()
 		CalcStatsFont();
 		if (S_OK == m_Font3D.CreateFontBitmap(L"Consolas", m_StatsFontH, 0)) {
 			SIZE charSize = m_Font3D.GetMaxCharMetric();
-			m_StatsRect.right  = m_StatsRect.left + 61 * charSize.cx + 5 + 3;
-			m_StatsRect.bottom = m_StatsRect.top + 18 * charSize.cy + 5 + 3;
+			m_StatsRect.right  = m_StatsRect.left + 64 * charSize.cx + 5 + 3;
+			m_StatsRect.bottom = m_StatsRect.top + 19 * charSize.cy + 5 + 3;
 			m_StatsBackground.Set(m_StatsRect, D3DCOLOR_ARGB(80, 0, 0, 0));
 		}
 
@@ -1214,9 +1214,9 @@ BOOL CDX9VideoProcessor::InitMediaType(const CMediaType* pmt)
 	if (FmtParams.DXVA2Format != D3DFMT_UNKNOWN) {
 		hr = InitializeDXVA2VP(FmtParams, origW, origH);
 		if (SUCCEEDED(hr)) {
-			bool bTransFunc22 = m_srcExFmt.VideoTransferFunction == DXVA2_VideoTransFunc_22
-				|| m_srcExFmt.VideoTransferFunction == DXVA2_VideoTransFunc_709
-				|| m_srcExFmt.VideoTransferFunction == DXVA2_VideoTransFunc_240M
+			bool bTransFunc22 = m_srcExFmt.VideoTransferFunction == MFVideoTransFunc_22
+				|| m_srcExFmt.VideoTransferFunction == MFVideoTransFunc_709
+				|| m_srcExFmt.VideoTransferFunction == MFVideoTransFunc_240M
 				|| m_srcExFmt.VideoTransferFunction == MFVideoTransFunc_HLG; // HLG compatible with SDR
 
 			if (m_srcExFmt.VideoTransferFunction == MFVideoTransFunc_2084 && m_bConvertToSdr) {
@@ -2263,14 +2263,14 @@ HRESULT CDX9VideoProcessor::UpdateConvertColorShader()
 		if (m_srcParams.cformat != CF_YUY2 && m_iChromaScaling == CHROMA_Bilinear) {
 			if (m_srcParams.Subsampling == 420) {
 				switch (m_srcExFmt.VideoChromaSubsampling) {
-				case DXVA2_VideoChromaSubsampling_Cosited:
+				case MFVideoChromaSubsampling_Cosited:
 					sx = 0.5f * dx;
 					sy = 0.5f * dy;
 					break;
-				case DXVA2_VideoChromaSubsampling_MPEG1:
+				case MFVideoChromaSubsampling_MPEG1:
 					//nothing;
 					break;
-				case DXVA2_VideoChromaSubsampling_MPEG2:
+				case MFVideoChromaSubsampling_MPEG2:
 				default:
 					sx = 0.5f * dx;
 				}
@@ -2891,9 +2891,9 @@ HRESULT CDX9VideoProcessor::TextureResizeShader(
 void CDX9VideoProcessor::UpdateStatsPresent()
 {
 	if (m_d3dpp.SwapEffect) {
-		m_strStatsPresent.assign(L"\nPresentation  : ");
+		m_strStatsPresent.assign(L"\nPresentation    : ");
 		if (m_bVBlankBeforePresent) {
-			m_strStatsPresent.append(L"wait VBlank, ");
+			m_strStatsPresent.append(L"wait for VBlank, ");
 		}
 		switch (m_d3dpp.SwapEffect) {
 		case D3DSWAPEFFECT_DISCARD:
@@ -2924,16 +2924,16 @@ void CDX9VideoProcessor::UpdateStatsStatic()
 
 		UpdateStatsInputFmt();
 
-		m_strStatsVProc.assign(L"\nVideoProcessor: ");
+		m_strStatsVProc.assign(L"\nVideo Processor : ");
 		if (m_DXVA2VP.IsReady()) {
-			m_strStatsVProc += std::format(L"DXVA2 VP, output to {}", D3DFormatToString(m_DXVA2OutputFmt));
+			m_strStatsVProc += std::format(L"DXVA2 VP, Output to {}", D3DFormatToString(m_DXVA2OutputFmt));
 		} else {
 			m_strStatsVProc.append(L"Shaders");
 			if (m_srcParams.Subsampling == 420 || m_srcParams.Subsampling == 422) {
-				m_strStatsVProc.append(L", Chroma scaling: ");
+				m_strStatsVProc.append(L", Chroma Scaling: ");
 				switch (m_iChromaScaling) {
 				case CHROMA_Nearest:
-					m_strStatsVProc.append(L"Nearest-neighbor");
+					m_strStatsVProc.append(L"Nearest-Neighbor");
 					break;
 				case CHROMA_Bilinear:
 					m_strStatsVProc.append(L"Bilinear");
@@ -2944,14 +2944,14 @@ void CDX9VideoProcessor::UpdateStatsStatic()
 				}
 			}
 		}
-		m_strStatsVProc += std::format(L"\nInternalFormat: {}", D3DFormatToString(m_InternalTexFmt));
+		m_strStatsVProc += std::format(L"\nInternal Format : {}", D3DFormatToString(m_InternalTexFmt));
 
 		if (SourceIsHDR()) {
-			m_strStatsHDR.assign(L"\nHDR processing: ");
+			m_strStatsHDR.assign(L"\nHDR Processing  : ");
 			if (m_bConvertToSdr) {
 				m_strStatsHDR.append(L"Convert to SDR");
 			} else {
-				m_strStatsHDR.append(L"Not used");
+				m_strStatsHDR.append(L"Not Used");
 			}
 		} else {
 			m_strStatsHDR.clear();
@@ -3001,11 +3001,11 @@ HRESULT CDX9VideoProcessor::DrawStats(IDirect3DSurface9* pRenderTarget)
 	str.reserve(700);
 	str.assign(m_strStatsHeader);
 	str.append(m_strStatsDispInfo);
-	str += std::format(L"\nGraph. Adapter: {}", m_strAdapterDescription);
+	str += std::format(L"\nGraphics Adapter: {}", m_strAdapterDescription);
 
 	wchar_t frametype = (m_CurrentSampleFmt >= DXVA2_SampleFieldInterleavedEvenFirst && m_CurrentSampleFmt <= DXVA2_SampleFieldSingleOdd) ? 'i' : 'p';
 	str += std::format(
-		L"\nFrame rate    : {:7.3f}{},{:7.3f}",
+		L"\nFrame Rate      : {:7.3f}{},{:7.3f}p",
 		m_pFilter->m_FrameStats.GetAverageFps(),
 		frametype,
 		m_pFilter->m_DrawStats.GetAverageFps()
@@ -3013,16 +3013,19 @@ HRESULT CDX9VideoProcessor::DrawStats(IDirect3DSurface9* pRenderTarget)
 
 	str.append(m_strStatsInputFmt);
 	if (m_Dovi.bValid) {
-		str.append(L", MetaData: DolbyVision");
+		str.append(L", Metadata: Dolby Vision");
+		if (m_Dovi.bHasMMR) {
+			str.append(L"(MMR)");
+		}
 	}
 	str.append(m_strStatsVProc);
 
 	const int dstW = m_videoRect.Width();
 	const int dstH = m_videoRect.Height();
 	if (m_iRotation) {
-		str += std::format(L"\nScaling       : {}x{} r{}\u00B0> {}x{}", m_srcRectWidth, m_srcRectHeight, m_iRotation, dstW, dstH);
+		str += std::format(L"\nScaling         : {}x{} r{}\u00B0> {}x{}", m_srcRectWidth, m_srcRectHeight, m_iRotation, dstW, dstH);
 	} else {
-		str += std::format(L"\nScaling       : {}x{} -> {}x{}", m_srcRectWidth, m_srcRectHeight, dstW, dstH);
+		str += std::format(L"\nScaling         : {}x{} -> {}x{}", m_srcRectWidth, m_srcRectHeight, dstW, dstH);
 	}
 	if (m_srcRectWidth != dstW || m_srcRectHeight != dstH) {
 		if (m_DXVA2VP.IsReady() && m_bVPScaling && !m_bVPScalingUseShaders) {
@@ -3042,38 +3045,65 @@ HRESULT CDX9VideoProcessor::DrawStats(IDirect3DSurface9* pRenderTarget)
 	}
 
 	if (m_strCorrection || m_pPostScaleShaders.size() || m_bDitherUsed) {
-		str.append(L"\nPostProcessing:");
+		str.append(L"\nPost-Processing :");
 		if (m_strCorrection) {
 			str += std::format(L" {},", m_strCorrection);
 		}
 		if (m_pPostScaleShaders.size()) {
-			str += std::format(L" shaders[{}],", m_pPostScaleShaders.size());
+			str += std::format(L" Shaders[{}],", m_pPostScaleShaders.size());
 		}
 		if (m_bDitherUsed) {
-			str.append(L" dither");
+			str.append(L" Dither");
 		}
 		str_trim_end(str, ',');
 	}
 	str.append(m_strStatsHDR);
 	str.append(m_strStatsPresent);
 
-	str += std::format(L"\nFrames: {:5}, skipped: {}/{}, failed: {}",
+	str += std::format(L"\nFrames          : {}, skipped: {}/{}, failed: {}",
 		m_pFilter->m_FrameStats.GetFrames(), m_pFilter->m_DrawStats.m_dropped, m_RenderStats.dropped2, m_RenderStats.failed);
-	str += std::format(L"\nTimes(ms): Copy{:3}, Paint{:3}, Present{:3}",
+	str += std::format(L"\nTimes           : copy:{:3} ms, paint:{:3} ms, present:{:3} ms",
 		m_RenderStats.copyticks    * 1000 / GetPreciseTicksPerSecondI(),
 		m_RenderStats.paintticks   * 1000 / GetPreciseTicksPerSecondI(),
 		m_RenderStats.presentticks * 1000 / GetPreciseTicksPerSecondI());
-	str += std::format(L"\nSync offset   : {:+3} ms", (m_RenderStats.syncoffset + 5000) / 10000);
+	str += std::format(L"\nSync offset     : {:+3} ms", (m_RenderStats.syncoffset + 5000) / 10000);
 
 #if SYNC_OFFSET_EX
 	{
 		const auto [so_min, so_max] = m_Syncs.MinMax();
 		const auto [sod_min, sod_max] = m_SyncDevs.MinMax();
-		str += std::format(L", range[{:+3.0f};{:+3.0f}], max change{:+3.0f}/{:+3.0f}",
+		str += std::format(L", range [{:+3.0f};{:+3.0f}], max change {:+3.0f}/{:+3.0f}",
 			so_min / 10000.0f,
 			so_max / 10000.0f,
 			sod_min / 10000.0f,
 			sod_max / 10000.0f);
+	}
+
+	//log the average frametime variance and desync
+	const auto& devs = m_SyncDevs.Data();
+	const auto dev_size = m_SyncDevs.Size();
+	if (dev_size > 0)
+	{
+		LONGLONG avg = 0;
+		for (unsigned int i = 0; i < dev_size; i++)
+		{
+			avg += abs(devs[i]);
+		}
+		avg /= dev_size;
+		str += std::format(L",\n  avg dev: {:3.3f} ms", (float)avg / 10000.f);
+	}
+
+	const auto& syncs = m_Syncs.Data();
+	const auto sync_size = m_Syncs.Size();
+	if (sync_size > 0)
+	{
+		LONGLONG avg = 0;
+		for (unsigned int i = 0; i < sync_size; i++)
+		{
+			avg += (syncs[i]);
+		}
+		avg /= sync_size;
+		str += std::format(L", avg sync: {:+3.3f} ms", (float)avg / 10000.f);
 	}
 #endif
 #if TEST_TICKS
