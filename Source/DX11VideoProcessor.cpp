@@ -2082,16 +2082,16 @@ void CDX11VideoProcessor::SleepToSync(CRefTime& rtClock, const REFERENCE_TIME& r
 	//frame sync variance. we want to offset our average by this amount
 	//	so we don't sometimes overshoot 0ms
 	static LONG delta = 1l;
+	//no need to update every frame
+	//would cause too much fluctuations
+	//prefer to have smoothness over perfect sync
+	static int delay1 = m_pFilter->m_DrawStats.GetAverageFps() * 2;
+	static int delay2 = m_pFilter->m_DrawStats.GetAverageFps() * 2;
 
 	//dynamic sync adjustment, just in case load changes or stuttering happens
-	//	we want to ride as close to the perfect sync, preferring to ride just below
+	//	we want to ride as close to the perfect sync, preferring to be just below
 	if (m_pFilter->m_filterState == State_Running) {
-		//no need to update every frame
-		//would case too much fluctuations
-		//prefer to have smoothness over perfect sync
-		static int delay1 = m_pFilter->m_DrawStats.GetAverageFps() * 2;
 		delay1--;
-		static int delay2 = m_pFilter->m_DrawStats.GetAverageFps() * 2;
 		delay2--;
 
 		if (delay1 < 0)
@@ -2128,16 +2128,22 @@ void CDX11VideoProcessor::SleepToSync(CRefTime& rtClock, const REFERENCE_TIME& r
 		}
 
 		m_pFilter->StreamTime(rtClock);
+		//how many microseconds until the frame has to be drawn
 		LONG us_to_ideal_time = (rtClock - rtStart) / 10l + delta * 1000l;
-		//just for good measure
-		us_to_ideal_time = std::clamp(us_to_ideal_time, -40000l, 40000l);
+		//sleep() has some variability, so don't use it if less than this much time left
+		constexpr LONG sleep_dev_offset = 2500l;
 
 		//if we are several milliseconds before the time when this frame should appear on screen,
 		//	sleep until that time comes to sync up.
 		//offset it by one ms just to account for code runtime,
 		//	better to be slightly before than to overshoot and miss a frame
-		if (us_to_ideal_time < -1000l * (2 + sync_miss))
-			std::this_thread::sleep_for(std::chrono::microseconds(abs(us_to_ideal_time + (1l + sync_miss) * 1000l)));
+		do
+		{
+			if (us_to_ideal_time < -(1000l * sync_miss + sleep_dev_offset))
+				std::this_thread::sleep_for(std::chrono::microseconds(abs(us_to_ideal_time) - (1000l * sync_miss + sleep_dev_offset)));
+			m_pFilter->StreamTime(rtClock);
+			us_to_ideal_time = (rtClock - rtStart) / 10l + delta * 1000l;
+		} while (us_to_ideal_time < -1000l * sync_miss);
 	}
 }
 
