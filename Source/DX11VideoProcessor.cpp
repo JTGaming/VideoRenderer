@@ -2072,10 +2072,12 @@ BOOL CDX11VideoProcessor::GetAlignmentSize(const CMediaType& mt, SIZE& Size)
 	return FALSE;
 }
 
-void CDX11VideoProcessor::SleepToSync(CRefTime& rtClock, const REFERENCE_TIME& rtStart)
+void CDX11VideoProcessor::SleepToSync(const REFERENCE_TIME& rtStart)
 {
 	if (!m_bVPFrameSyncing)
 		return;
+
+	CRefTime rtClock(rtStart);
 
 	//with this we more finely sync the frames based on how much offset we are from 0ms
 	static LONG sync_miss = 1l;
@@ -2165,7 +2167,6 @@ HRESULT CDX11VideoProcessor::ProcessSample(IMediaSample* pSample)
 		return hr;
 	}
 
-	SleepToSync(rtClock, rtStart);
 	// always Render(1) a frame after CopySample()
 	hr = Render(1);
 	m_pFilter->m_DrawStats.Add(GetPreciseTick());
@@ -2188,7 +2189,6 @@ HRESULT CDX11VideoProcessor::ProcessSample(IMediaSample* pSample)
 		}
 
 		rtStart += rtFrameDur / 2;
-		SleepToSync(rtClock, rtStart);
 		hr = Render(2);
 		m_pFilter->m_DrawStats.Add(GetPreciseTick());
 		if (m_pFilter->m_filterState == State_Running) {
@@ -2535,8 +2535,14 @@ HRESULT CDX11VideoProcessor::Render(int field)
 	}
 #endif
 
+	m_RenderStats.paintticks = GetPreciseTick() - tick1;
+
+	{
+		const REFERENCE_TIME rtStart = field == 2 ? m_rtStart + m_pFilter->m_FrameStats.GetAverageFrameDuration() / 2 : m_rtStart;
+		SleepToSync(rtStart);
+	}
+
 	uint64_t tick3 = GetPreciseTick();
-	m_RenderStats.paintticks = tick3 - tick1;
 
 	if (m_pDXGISwapChain4) {
 		if (m_hdr10.bValid) {
